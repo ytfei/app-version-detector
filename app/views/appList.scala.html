@@ -1,0 +1,39 @@
+@(apps: List[App])
+
+@main("App Management", "app") {
+
+<div id="features">
+    <input type="text" id="app" name="app" size="40"> <a href="">Add New App</a>
+</div>
+
+<div id="app_data">
+    <table class="table table-striped">
+
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>App Package</th>
+            <th>Operation</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @if(apps.size > 0) {
+            @for(item <- apps){
+            <tr>
+                <td>@item.id</td>
+                <td>@item.name</td>
+                <td><a href="@routes.AppManager.removeApp(item.id)">Remove App</a></td>
+            </tr>
+            }
+        } else {
+            <tr class="warning">
+                <td colspan="3" style="text-align: center;">No App</td>
+            </tr>
+        }
+        </tbody>
+
+    </table>
+</div>
+
+}

@@ -1,0 +1,40 @@
+@(subscribers: List[Subscriber])
+
+@main("Subscriber Management", "subscriber") {
+
+<div id="features">
+    <input type="text" id="subscriber" name="subscriber" size="40"> <a href="">Add Subscriber</a>
+</div>
+
+<div id="app_data">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>E-Mail</th>
+            <th>Operation</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @if(subscribers.size > 0) {
+            @for(item <- subscribers){
+            <tr>
+                <td>@item.id</td>
+                <td>@item.name.getOrElse("")</td>
+                <td>@item.email</td>
+                <td><a href="@routes.SubscriberManager.removeSubscriber(item.id)">Remove Subscriber</a></td>
+            </tr>
+            }
+        } else {
+            <tr class="warning">
+                <td colspan="4" style="text-align: center;">No Subscriber!</td>
+            </tr>
+        }
+        </tbody>
+
+    </table>
+</div>
+
+}
