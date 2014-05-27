@@ -34,7 +34,7 @@ object Subscriber {
     DB.withConnection(implicit conn => SQL(sql).as(subscriber *))
   }
 
-  def delete(subId: Int) = {
+  def delete(subId: Long) = {
     val sql = "delete from subscriber where id = {id}"
 
     DB.withConnection(implicit conn => SQL(sql).on('id -> subId).executeUpdate())

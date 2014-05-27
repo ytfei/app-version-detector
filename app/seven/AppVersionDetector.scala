@@ -8,7 +8,7 @@ case class AppInfo(name: String, versionCode: Int, versionName: Option[String], 
 case class Error(statusCode: Int, message: String) extends QueryResult
 
 /// ----------------------
-trait AppVersionDetecter {
+trait AppVersionDetector {
   def lookup(packageName: String): QueryResult
 }
 
@@ -21,13 +21,13 @@ import scala.concurrent.duration._
 
 
 /**
- * An implimentation based on 42matters web api: https://42matters.com/api/lookup
+ * An implementation based on 42matters web api: https://42matters.com/api/lookup
  */
-class MattersAppVersionDetecter extends AppVersionDetecter {
+class MattersAppVersionDetector(app: Application) extends AppVersionDetector {
 
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
-  private val conf = Play.current.configuration
+  private val conf = app.configuration
 
   val accessToken = conf.getString("api.access_token")
   val lookupUrl = conf.getString("api.lookup.url")
@@ -38,8 +38,17 @@ class MattersAppVersionDetecter extends AppVersionDetecter {
       .withQueryString("access_token" -> accessToken.get, "p" -> packageName)
       .get.map(resp => {
 
+      Logger.debug(resp.body)
+
       val json = resp.json
       json \ "market_update" match {
+        case _: JsUndefined =>
+          // error happened, parse result as Error Status message
+          val statusCode = (json \ "statusCode").as[Int]
+          val message = (json \ "message").as[String]
+
+          Error(statusCode, message)
+
         case _: JsValue =>
           // parse message response
           val versionCode = (json \ "version_code").as[Int]
@@ -47,13 +56,6 @@ class MattersAppVersionDetecter extends AppVersionDetecter {
           val lastUpdate = (json \ "market_update").as[String]
 
           AppInfo(packageName, versionCode, Some(versionName), Some(lastUpdate))
-
-        case _ =>
-          // error happened, parse result as Error Status message
-          val statusCode = (json \ "statusCode").as[Int]
-          val message = (json \ "message").as[String]
-
-          Error(statusCode, message)
       }
 
     })
@@ -62,11 +64,11 @@ class MattersAppVersionDetecter extends AppVersionDetecter {
   }
 }
 
-object MattersAppVersionDetecter {
+object MattersAppVersionDetector {
   def run = {
     new play.core.StaticApplication(new java.io.File("."))
 
-    val d = new MattersAppVersionDetecter
+    val d = new MattersAppVersionDetector(Play.current)
     println(d.lookup("com.google.android.apps.plus"))
   }
 }

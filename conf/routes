@@ -6,11 +6,11 @@
 GET     /   	controllers.Application.index
 
 GET		/app    controllers.AppManager.index
-GET		/addApp/:app     controllers.AppManager.addApp(app: String)
+POST	/addApp     controllers.AppManager.addApp
 GET     /removeApp/:id      controllers.AppManager.removeApp(id: Long)
 
 GET     /subscriber     controllers.SubscriberManager.index
-GET     /addSubscriber  controllers.SubscriberManager.addSubscriber(email:String, name:Option[String])
+POST    /addSubscriber  controllers.SubscriberManager.addSubscriber
 GET     /removeSubscriber/:id   controllers.SubscriberManager.removeSubscriber(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
