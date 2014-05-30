@@ -49,13 +49,18 @@ class PollingActor(app: Application) extends Actor {
 
 
             if (versionCode > 0) {
-              val v = apk.currentVersionCode.getOrElse(apk.initVersionCode)
+              val (v, n) = if (apk.currentVersionCode.isDefined)
+                (apk.currentVersionCode.get, apk.currentVersionName.getOrElse(""))
+              else (apk.initVersionCode, apk.initVersionName)
+
               if (v != versionCode) {
                 models.AppInfo.update(apk.copy(currentVersionCode = Option(versionCode),
                   currentVersionName = versionName))
 
-                val n = apk.currentVersionName.getOrElse(apk.initVersionName)
-                message += s"""${apk.name} upgraded to "$versionCode / $versionName" from "$v / $n" """
+                message +=
+                  s"""
+                    | ${apk.name} upgraded to "$versionCode / ${versionName.getOrElse("unknown")}" from "$v / ${if (n != null && n.size > 0) n else "unknown"}"
+                  """.stripMargin
               }
             }
 

@@ -16,7 +16,7 @@ import play.api.Play.current
  */
 object AppManager extends Controller {
   def index = Action { implicit req =>
-    Ok(views.html.appList(AppInfo.readAll))
+    Ok(views.html.appList(AppInfo.readAll, appForm))
   }
 
   val appForm: Form[AppData] = Form(
@@ -37,7 +37,7 @@ object AppManager extends Controller {
           case ("name", _) => buff += "Malformed app package name"
         })
 
-        BadRequest(views.html.appList(AppInfo.readAll, Option(buff.mkString("<br />"))))
+        BadRequest(views.html.appList(AppInfo.readAll, formWithError, Option(buff.mkString("<br />"))))
       }, app => {
         if (AppInfo.create(AppInfo(0, app.name, app.versionCode, app.versionName.getOrElse(""))) > 0)
           Redirect(routes.AppManager.index)

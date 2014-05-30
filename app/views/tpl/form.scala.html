@@ -1,0 +1,10 @@
+@(elements: helper.FieldElements)
+
+<div class="form-group @if(elements.hasErrors) {has-error has-feedback}">
+    <label class="sr-only" for="@elements.id">@elements.label(elements.lang)</label>
+    @elements.input
+
+    @if(elements.hasErrors) {
+    <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+    }
+</div>

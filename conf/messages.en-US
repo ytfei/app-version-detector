@@ -1,0 +1,2 @@
+error.email=Malformed E-Mail address.
+error.email.unexpected=Mail address you provided isn't allowed here!

@@ -1,31 +1,37 @@
-@(subscribers: List[Subscriber], message: Option[String] = None)
+@(subscribers: List[Subscriber], formData: Form[(String, String)])
+
+@import MyHelper._
+@import helper._
 
 @main("Subscriber Management", "subscriber") {
 
 <div id="data">
-    <div id="error" class="alert alert-warning">
-        <b>NOTE:</b><br/>Only <i>INTERNAL</i> mail address (@@seven.com) allowed!
+    <div id="warn" class="alert alert-warning">
+        <b>NOTE:</b><br/>Only INTERNAL mail address (@@seven.com) allowed!
     </div>
 
-    @message.map { v =>
-        <div id="error" class="alert alert-danger">
-            @v
-        </div>
-    }    
+@******************
+    @if(formData.hasErrors || formData.hasGlobalErrors){
+    <div id="error" class="alert alert-danger">
+        <ul>
+        @for(e <- formData.globalErrors) {
+            <li>@Messages(e.message)</li>
+        }
 
-    <form class="form-inline" role="form" action="@routes.SubscriberManager.addSubscriber" method="POST">
-        <div class="form-group">
-            <label class="sr-only" for="subscriber">E-Mail</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="E-Mail">
-        </div>
+        @for(e <- formData.errors) {
+            <li>@Messages(e.message)</li>
+        }
+        </ul>
+    </div>
+    }
+******************@
 
-        <div class="form-group">
-            <label class="sr-only" for="name">User Name (optional)</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="User Name (optional)">
-        </div>
+    @form(action = routes.SubscriberManager.addSubscriber, 'id -> "form_id", 'role -> "form", 'method -> "POST", 'class -> "form-inline") {
+        @inputText(formData("email"), 'class -> "form-control", 'placeholder -> "E-Mail")
+        @inputText(formData("name"), 'class -> "form-control", 'placeholder -> "User Name (optional)")
 
         <button type="submit" class="btn btn-default">Add New Subscriber</button>
-    </form>    
+    } 
 </div>
 
 <div id="app_data">

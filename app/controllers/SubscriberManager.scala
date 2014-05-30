@@ -6,7 +6,6 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.Play
 import Play.current
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by evans on 5/27/14.
@@ -14,19 +13,18 @@ import scala.collection.mutable.ArrayBuffer
 object SubscriberManager extends Controller {
 
   def index = Action { implicit req =>
-    Ok(views.html.subscriberList(Subscriber.readAll))
+    Ok(views.html.subscriberList(Subscriber.readAll, subscriberForm))
   }
 
   val subscriberForm = Form(
-    tuple("email" -> email.verifying("Mail address you provided isn't allowed here!", _.contains("@seven.com")),
+    tuple("email" -> email.verifying(_.contains("@seven.com")),
       "name" -> text)
   )
 
   def addSubscriber = Action { implicit req =>
     subscriberForm.bindFromRequest().fold(
       formWithError => {
-        BadRequest(views.html.subscriberList(Subscriber.readAll,
-          Option(formWithError.errors.map(_.message).mkString("<br />"))))
+        BadRequest(views.html.subscriberList(Subscriber.readAll, formWithError))
       }, data => {
         if (Subscriber.create(Subscriber(0, data._1, Option(data._2))) > 0) {
           Redirect(routes.SubscriberManager.index)

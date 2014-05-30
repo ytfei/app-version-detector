@@ -1,4 +1,7 @@
-@(apps: List[AppInfo], message: Option[String] = None)
+@(apps: List[AppInfo], formData:Form[AppData], message: Option[String] = None)
+
+@import MyHelper._
+@import helper._
 
 @main("App Management", "app") {
 
@@ -9,24 +12,13 @@
         </div>
     }
 
-    <form class="form-inline" role="form" action="@routes.AppManager.addApp" method="POST">
-        <div class="form-group">
-            <label class="sr-only" for="name">App Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="App Package Name (com.seven.asimov)">
-        </div>
-
-        <div class="form-group">
-            <label class="sr-only" for="name">App Initial Version Code</label>
-            <input type="text" class="form-control" id="version_code" name="version_code" placeholder="App Version Code (123)">
-        </div>
-
-        <div class="form-group">
-            <label class="sr-only" for="name">App Initial Version Name</label>
-            <input type="text" class="form-control" id="version_name" name="version_name" placeholder="App Version Name">
-        </div>        
+    @form(action = routes.AppManager.addApp, 'id -> "form_id", 'role -> "form", 'method -> "POST", 'class -> "form-inline") {
+        @inputText(formData("name"), 'class -> "form-control", 'placeholder -> "Package Name e.g. com.seven.asimov")
+        @inputText(formData("version_code"), 'class -> "form-control", 'placeholder -> "Version Code e.g. 123")
+        @inputText(formData("version_name"), 'class -> "form-control", 'placeholder -> "Version Name e.g. 3.2.0")
 
         <button type="submit" class="btn btn-default">Add New App</button>
-    </form>    
+    } 
 </div>
 
 <div id="app_data">
