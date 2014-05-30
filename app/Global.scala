@@ -12,7 +12,7 @@ object Global extends GlobalSettings {
   override def onStart(app: Application) {
     Logger.info("Application has started")
 
-    Akka.system(app).actorOf(Props(new PollingActor(app)), name = "polling")
+    Akka.system(app).actorOf(Props(new PollingActor(app)), name = PollingActor.name)
   }
 
   override def onStop(app: Application) {

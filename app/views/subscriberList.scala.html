@@ -1,8 +1,18 @@
-@(subscribers: List[Subscriber])
+@(subscribers: List[Subscriber], message: Option[String] = None)
 
 @main("Subscriber Management", "subscriber") {
 
 <div id="data">
+    <div id="error" class="alert alert-warning">
+        <b>NOTE:</b><br/>Only <i>INTERNAL</i> mail address (@@seven.com) allowed!
+    </div>
+
+    @message.map { v =>
+        <div id="error" class="alert alert-danger">
+            @v
+        </div>
+    }    
+
     <form class="form-inline" role="form" action="@routes.SubscriberManager.addSubscriber" method="POST">
         <div class="form-group">
             <label class="sr-only" for="subscriber">E-Mail</label>
@@ -22,7 +32,6 @@
     <table class="table table-striped">
         <thead>
         <tr>
-            <th>ID</th>
             <th>Name</th>
             <th>E-Mail</th>
             <th>Operation</th>
@@ -33,15 +42,14 @@
         @if(subscribers.size > 0) {
             @for(item <- subscribers){
             <tr>
-                <td>@item.id</td>
                 <td>@item.name.getOrElse("")</td>
                 <td>@item.email</td>
-                <td><a href="@routes.SubscriberManager.removeSubscriber(item.id)">Remove Subscriber</a></td>
+                <td><a href="@routes.SubscriberManager.removeSubscriber(item.id)" class="btn btn-primary">Remove Subscriber</a></td>
             </tr>
             }
         } else {
             <tr class="warning">
-                <td colspan="4" style="text-align: center;">No Subscriber!</td>
+                <td colspan="4" style="text-align: center;"><h4>No Subscriber!</h4></td>
             </tr>
         }
         </tbody>

@@ -27,8 +27,7 @@
 
             <div class="row">
                 <div class="col-xs-12">
-                    <ul class="nav nav-pills">
-                        <li @if(feature == "home"){class="active"}><a href="@routes.Application.index">Home</a></li>
+                    <ul class="nav nav-pills">                        
                         <li @if(feature == "app"){class="active"}><a href="@routes.AppManager.index">Manage App</a></li>
                         <li @if(feature == "subscriber"){class="active"}><a href="@routes.SubscriberManager.index">Manage Subscribe</a></li>
                     </ul>

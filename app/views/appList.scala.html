@@ -1,13 +1,30 @@
-@(apps: List[App])
+@(apps: List[AppInfo], message: Option[String] = None)
 
 @main("App Management", "app") {
 
 <div id="data">
+    @message.map { v =>
+        <div id="error" class="alert alert-danger">
+            @v
+        </div>
+    }
+
     <form class="form-inline" role="form" action="@routes.AppManager.addApp" method="POST">
         <div class="form-group">
-            <label class="sr-only" for="name">App Package Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="App Package Name">
+            <label class="sr-only" for="name">App Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="App Package Name (com.seven.asimov)">
         </div>
+
+        <div class="form-group">
+            <label class="sr-only" for="name">App Initial Version Code</label>
+            <input type="text" class="form-control" id="version_code" name="version_code" placeholder="App Version Code (123)">
+        </div>
+
+        <div class="form-group">
+            <label class="sr-only" for="name">App Initial Version Name</label>
+            <input type="text" class="form-control" id="version_name" name="version_name" placeholder="App Version Name">
+        </div>        
+
         <button type="submit" class="btn btn-default">Add New App</button>
     </form>    
 </div>
@@ -17,8 +34,10 @@
 
         <thead>
         <tr>
-            <th>ID</th>
-            <th>App Package</th>
+            <th>App Package Name</th>
+            <th>Initial Version Info (Code / Name)</th>
+            <th>Current Version Info (Code / Name)</th>
+            <th>Last Update</th>
             <th>Operation</th>
         </tr>
         </thead>
@@ -26,15 +45,21 @@
         <tbody>
         @if(apps.size > 0) {
             @for(item <- apps){
-            <tr>
-                <td>@item.id</td>
+            <tr @if(item.currentVersionCode.isDefined && item.currentVersionCode != Option(item.initVersionCode)){class="warning"} >
                 <td>@item.name</td>
-                <td><a href="@routes.AppManager.removeApp(item.id)">Remove App</a></td>
+                <td>@item.initVersionCode / @item.initVersionName</td>
+                <td>@item.currentVersionCode.fold("")(_.toString) / @item.currentVersionName.getOrElse("")</td>
+                <td>@item.lastUpdate.getOrElse("")</td>
+
+                <td>
+                    <a href="@routes.AppManager.removeApp(item.id)" class="btn btn-primary">Remove App</a>
+                    <a href="@routes.AppManager.resetApp(item.id)" class="btn btn-primary">Reset Version Info</a>
+                </td>
             </tr>
             }
         } else {
             <tr class="warning">
-                <td colspan="3" style="text-align: center;">No App</td>
+                <td colspan="5" style="text-align: center;"><h4>No Available App</h4></td>
             </tr>
         }
         </tbody>

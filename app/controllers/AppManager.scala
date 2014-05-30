@@ -1,9 +1,13 @@
 package controllers
 
 import play.api.mvc.{Action, Controller}
-import models.App
+import models.AppInfo
 import play.api.data._
 import play.api.data.Forms._
+import scala.collection.mutable.ArrayBuffer
+import seven.{UpdateInterval, PollingActor}
+
+import play.api.Play.current
 
 /**
  * Created by evans on 5/27/14.
@@ -12,21 +16,30 @@ import play.api.data.Forms._
  */
 object AppManager extends Controller {
   def index = Action { implicit req =>
-    Ok(views.html.appList(App.readAll))
+    Ok(views.html.appList(AppInfo.readAll))
   }
 
-  case class AppData(name: String) // Form model
-
-  val appForm = Form(mapping("name" -> nonEmptyText)(AppData.apply)(AppData.unapply))
+  val appForm: Form[AppData] = Form(
+    mapping(
+      "name" -> nonEmptyText,
+      "version_code" -> longNumber,
+      "version_name" -> optional(text)
+    )(AppData.apply)(AppData.unapply)
+  )
 
   def addApp = Action { implicit req =>
     appForm.bindFromRequest().fold(
       formWithError => {
-        BadRequest("Data you submitted is invalidate.")
-      },
-      appData => {
-        val app = appData.name
-        if (App.create(App(0, app)) > 0)
+        val buff = new ArrayBuffer[String]
+
+        formWithError.errors.foreach(e => (e.key, e.message) match {
+          case ("version_code", _) => buff += "Malformed version code, integer number required!"
+          case ("name", _) => buff += "Malformed app package name"
+        })
+
+        BadRequest(views.html.appList(AppInfo.readAll, Option(buff.mkString("<br />"))))
+      }, app => {
+        if (AppInfo.create(AppInfo(0, app.name, app.versionCode, app.versionName.getOrElse(""))) > 0)
           Redirect(routes.AppManager.index)
         else
           BadRequest("Failed to create app: " + app)
@@ -34,9 +47,28 @@ object AppManager extends Controller {
   }
 
   def removeApp(id: Long) = Action { implicit req =>
-    if (App.delete(id) > 0)
+    if (AppInfo.delete(id) > 0)
       Redirect(routes.AppManager.index)
     else
       BadRequest("Failed to remove app: " + id)
   }
+
+  def resetApp(id: Long) = Action { implicit req =>
+    if (AppInfo.reset(id) > 0) {
+      Redirect(routes.AppManager.index)
+    } else {
+      Redirect(routes.AppManager.index) // todo: how to deal with the failure
+    }
+  }
+
+  def updateInterval(interval: Int) = Action { implicit req =>
+    import play.api.libs.concurrent.Akka
+
+    val x = Akka.system.actorSelection("/user/" + PollingActor.name)
+    x ! UpdateInterval(interval)
+    Ok(x.toString())
+  }
 }
+
+// Form model
+case class AppData(name: String, versionCode: Long, versionName: Option[String])

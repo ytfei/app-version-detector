@@ -3,11 +3,19 @@ package seven
 import akka.actor.{Cancellable, Actor}
 import scala.concurrent.duration._
 import play.api._
-import models.App
+import scala.collection.mutable.ArrayBuffer
+import models.Subscriber
+import scala.util.Try
+import scala.util.{Failure, Success => Succ}
 
 /**
  * Created by evans on 5/27/14.
  */
+
+object PollingActor {
+  val name = "PollingActor"
+}
+
 class PollingActor(app: Application) extends Actor {
 
   val detector = new MattersAppVersionDetector(app)
@@ -24,22 +32,55 @@ class PollingActor(app: Application) extends Actor {
   }
 
   override def receive = {
-    case DoPoll => checkAppVersion
+    case DoPoll => checkAppVersion()
     case UpdateInterval(v) if v > 10 => scheduleTrigger(v)
     case _ =>
   }
 
-  def checkAppVersion: Unit = {
-    val apks = App.readAll
+  def checkAppVersion(): Unit = {
+    val message = new ArrayBuffer[String]()
 
-    for (apk <- apks) {
-      detector.lookup(apk.name) match {
-        case info@AppInfo(_, versionCode, versionName, lastUpdate) =>
-          Logger.info(s"Found app info: ${info.toString}")
-        case error: Error =>
-          Logger.error(s"Failed to lookup app info for: $apk with error: ${error.toString}")
+    def doPoll() = {
+      val apks = models.AppInfo.readAll
+      for (apk <- apks) {
+        detector.lookup(apk.name) match {
+          case info@AppInfo(_, versionCode, versionName, lastUpdate) =>
+            Logger.info(s"Found app info: ${info.toString}")
+
+
+            if (versionCode > 0) {
+              val v = apk.currentVersionCode.getOrElse(apk.initVersionCode)
+              if (v != versionCode) {
+                models.AppInfo.update(apk.copy(currentVersionCode = Option(versionCode),
+                  currentVersionName = versionName))
+
+                val n = apk.currentVersionName.getOrElse(apk.initVersionName)
+                message += s"""${apk.name} upgraded to "$versionCode / $versionName" from "$v / $n" """
+              }
+            }
+
+          case error: Error =>
+            Logger.error(s"Failed to lookup app info for: $apk with error: ${error.toString}")
+        }
       }
     }
+
+    Try(doPoll()) match {
+      case Failure(e) =>
+        Logger.warn(e.getMessage, e)
+
+      case _ => // Success
+    }
+
+    if (message.size > 0) {
+      val recipients = Subscriber.readAll.map(_.email).toSeq
+      sendMail(message.mkString("\n"), recipients)
+    }
+  }
+
+  def sendMail(content: String, recipients: Seq[String]) = {
+    Logger.info("Send Mail" + content + " to " + recipients.mkString(","))
+    MailSender.send(recipients.mkString(","), "", "App updated!", content)
   }
 
   def scheduleTrigger(interval: Int) = {

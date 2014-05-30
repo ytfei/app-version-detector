@@ -9,13 +9,24 @@ import anorm._
 import anorm.SqlParser._
 import play.api.db._
 import play.api.Play.current
+import scala.util.Try
+import scala.util.{Failure, Success => Succ}
+import play.Logger
 
 object Subscriber {
   def create(subscriber: Subscriber) = {
     val sql = "insert into subscriber(name, email) values({name}, {email})"
 
-    DB.withConnection(implicit conn => SQL(sql).on('name -> subscriber.name.getOrElse(""),
-      'email -> subscriber.email).executeUpdate())
+    Try(DB.withConnection(implicit conn => SQL(sql).on('name -> subscriber.name.getOrElse(""),
+      'email -> subscriber.email).executeUpdate())) match {
+      case Succ(v) => v
+      case Failure(e) =>
+        if (e.getMessage.contains("Unique index")) {
+          Logger.warn(s"Subscriber ${subscriber.email} exists already!")
+        }
+
+        1 // return 1, assume the 'create' action is success
+    }
   }
 
   val subscriber = long("id") ~ str("name") ~ str("email") map {
@@ -29,7 +40,7 @@ object Subscriber {
   }
 
   def readAll: List[Subscriber] = {
-    val sql = "select id, name, email from subscriber"
+    val sql = "select id, name, email from subscriber order by name, email"
 
     DB.withConnection(implicit conn => SQL(sql).as(subscriber *))
   }

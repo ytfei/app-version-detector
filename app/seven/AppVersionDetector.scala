@@ -38,7 +38,7 @@ class MattersAppVersionDetector(app: Application) extends AppVersionDetector {
       .withQueryString("access_token" -> accessToken.get, "p" -> packageName)
       .get.map(resp => {
 
-      Logger.debug(resp.body)
+      Logger.trace(resp.body)
 
       val json = resp.json
       json \ "market_update" match {
@@ -60,7 +60,7 @@ class MattersAppVersionDetector(app: Application) extends AppVersionDetector {
 
     })
 
-    Await.result(future, Duration(3000, MILLISECONDS))
+    Await.result(future, Duration(5000, MILLISECONDS))
   }
 }
 

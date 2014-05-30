@@ -8,4 +8,6 @@ libraryDependencies ++= Seq(
   cache
 )     
 
+libraryDependencies += "com.typesafe" %% "play-plugins-mailer" % "2.2.0"
+
 play.Project.playScalaSettings

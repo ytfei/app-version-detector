@@ -2,28 +2,13 @@
  
 # --- !Ups
  
-CREATE TABLE User (
-    id bigint(20) NOT NULL AUTO_INCREMENT,
-    email varchar(255) NOT NULL,
-    password varchar(255) NOT NULL,
-    fullname varchar(255) NOT NULL,
-    isAdmin boolean NOT NULL,
-
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE app (
+create table app_info(
 	id bigint(20) NOT NULL AUTO_INCREMENT,
-	package varchar(255) NOT NULL,
-
-	PRIMARY KEY (id)
-);
-
-CREATE TABLE version(
-	id bigint(20) NOT NULL AUTO_INCREMENT,
-	app_id bigint(20) NOT NULL,
-	version_code bigint(20) NOT NULL,
-	version_name varchar(255),
+	name varchar(255) NOT NULL unique,
+	init_version_code bigint(20) NOT NULL,
+	init_version_name varchar(255),
+	curr_version_code bigint(20),
+	curr_version_name varchar(255),
 	last_update timestamp,
 
 	PRIMARY KEY (id)
@@ -32,7 +17,7 @@ CREATE TABLE version(
 CREATE TABLE subscriber(
 	id bigint(20) NOT NULL AUTO_INCREMENT,
 	name varchar(255),
-	email varchar(255) NOT NULL,
+	email varchar(255) NOT NULL unique,
 
 	PRIMARY KEY (id)
 );
