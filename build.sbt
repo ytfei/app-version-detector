@@ -1,4 +1,4 @@
-name := "app-version-detecter"
+name := "app-version-detector"
 
 version := "1.0-SNAPSHOT"
 
