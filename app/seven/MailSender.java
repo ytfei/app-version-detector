@@ -5,22 +5,23 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 
 /**
  * Created by evans on 5/29/14.
+ * <p/>
+ * This implementation only allow SEVEN's internal mail server.
  */
 public class MailSender {
 
-    public static void send(String recipientEmail, String ccEmail,
+    public static void send(Map<String, String> mailConf, String recipientEmail, String ccEmail,
                             String title, String message) throws AddressException, MessagingException {
 
-        System.setProperty("mail.debug", "true");
-
-        final String username = "app-version-detector";
-        final String password = "ar909!!";
-        String host = "hzs-mbx2.corp.seven.com";
-        int port = 25;
+        final String username = mailConf.get("smtp.user");
+        final String password = mailConf.get("smtp.password");
+        final String host = mailConf.get("smtp.host");
+        final String port = mailConf.get("smtp.port");
 
         // Get a Properties object
         Properties props = System.getProperties();
@@ -39,7 +40,7 @@ public class MailSender {
         final MimeMessage msg = new MimeMessage(session);
 
         // -- Set the FROM and TO fields --
-        msg.setFrom(new InternetAddress(username + "@seven.com"));
+        msg.setFrom(new InternetAddress(username + "@seven.com")); // fixme: here I just bind to internal mail server
         msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail, false));
 
         if (ccEmail.length() > 0) {

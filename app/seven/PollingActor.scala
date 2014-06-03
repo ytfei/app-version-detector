@@ -7,6 +7,8 @@ import scala.collection.mutable.ArrayBuffer
 import models.Subscriber
 import scala.util.Try
 import scala.util.{Failure, Success => Succ}
+import java.util
+import scala.util
 
 /**
  * Created by evans on 5/27/14.
@@ -20,6 +22,17 @@ class PollingActor(app: Application) extends Actor {
 
   val detector = new MattersAppVersionDetector(app)
   var timerRef: Option[Cancellable] = None
+
+  lazy val mailConf = {
+    val conf = app.configuration
+    val result = new java.util.HashMap[String, String]()
+
+    for (k <- Seq("smtp.host", "smtp.port", "smtp.user", "smtp.password")) {
+      result.put(k, conf.getString(k).getOrElse(throw new IllegalArgumentException(s"configuration item '$k' is empty!")))
+    }
+
+    result
+  }
 
   import context.dispatcher
 
@@ -85,7 +98,7 @@ class PollingActor(app: Application) extends Actor {
 
   def sendMail(content: String, recipients: Seq[String]) = {
     Logger.info("Send Mail" + content + " to " + recipients.mkString(","))
-    MailSender.send(recipients.mkString(","), "", "App updated!", content)
+    MailSender.send(mailConf, recipients.mkString(","), "", "App updated!", content)
   }
 
   def scheduleTrigger(interval: Int) = {

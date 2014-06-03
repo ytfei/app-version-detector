@@ -12,7 +12,8 @@ object Global extends GlobalSettings {
   override def onStart(app: Application) {
     Logger.info("Application has started")
 
-    Akka.system(app).actorOf(Props(new PollingActor(app)), name = PollingActor.name)
+    val ref = Akka.system(app).actorOf(Props(new PollingActor(app)), name = PollingActor.name)
+    Logger.info(ref.path.toString)
   }
 
   override def onStop(app: Application) {
