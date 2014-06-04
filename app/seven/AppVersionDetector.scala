@@ -34,33 +34,41 @@ class MattersAppVersionDetector(app: Application) extends AppVersionDetector {
   val threshold = conf.getInt("api.lookup.threshold")
 
   override def lookup(packageName: String): QueryResult = {
-    val future = WS.url(lookupUrl.get)
-      .withQueryString("access_token" -> accessToken.get, "p" -> packageName)
-      .get.map(resp => {
+    var msg: String = ""
 
-      Logger.trace(resp.body)
+    try {
+      val future = WS.url(lookupUrl.get)
+        .withQueryString("access_token" -> accessToken.get, "p" -> packageName)
+        .get.map(resp => {
 
-      val json = resp.json
-      json \ "market_update" match {
-        case _: JsUndefined =>
-          // error happened, parse result as Error Status message
-          val statusCode = (json \ "statusCode").as[Int]
-          val message = (json \ "message").as[String]
+        msg = resp.body
+        Logger.trace(resp.body)
 
-          Error(statusCode, message)
+        val json = resp.json
+        json \ "market_update" match {
+          case _: JsUndefined =>
+            // error happened, parse result as Error Status message
+            val statusCode = (json \ "statusCode").as[Int]
+            val message = (json \ "message").as[String]
 
-        case _: JsValue =>
-          // parse message response
-          val versionCode = (json \ "version_code").as[Int]
-          val versionName = (json \ "version").as[String]
-          val lastUpdate = (json \ "market_update").as[String]
+            Error(statusCode, message)
 
-          AppInfo(packageName, versionCode, Some(versionName), Some(lastUpdate))
-      }
+          case _: JsValue =>
+            // parse message response
+            val versionCode = (json \ "version_code").as[Int]
+            val versionName = (json \ "version").as[String]
+            val lastUpdate = (json \ "market_update").as[String]
 
-    })
+            AppInfo(packageName, versionCode, Some(versionName), Some(lastUpdate))
+        }
 
-    Await.result(future, Duration(5000, MILLISECONDS))
+      })
+
+      Await.result(future, Duration(5000, MILLISECONDS))
+    } catch {
+      case e: Throwable =>
+        throw MattersApiException(s"Failed to get app '$packageName' info", msg, e)
+    }
   }
 }
 
@@ -72,3 +80,5 @@ object MattersAppVersionDetector {
     println(d.lookup("com.google.android.apps.plus"))
   }
 }
+
+case class MattersApiException(msg: String, data: String, cause: Throwable) extends Exception(msg, cause)

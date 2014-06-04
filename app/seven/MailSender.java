@@ -16,7 +16,9 @@ import java.util.Properties;
 public class MailSender {
 
     public static void send(Map<String, String> mailConf, String recipientEmail, String ccEmail,
-                            String title, String message) throws AddressException, MessagingException {
+                            String title, String message) throws MessagingException {
+
+        // System.setProperty("mail.debug", "true");
 
         final String username = mailConf.get("smtp.user");
         final String password = mailConf.get("smtp.password");
@@ -48,7 +50,7 @@ public class MailSender {
         }
 
         msg.setSubject(title);
-        msg.setText(message, "utf-8");
+        msg.setText(message, "utf-8", "html");
         msg.setSentDate(new Date());
 
         Transport.send(msg);

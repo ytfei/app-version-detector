@@ -39,8 +39,8 @@
             @for(item <- apps){
             <tr @if(item.currentVersionCode.isDefined && item.currentVersionCode != Option(item.initVersionCode)){class="warning"} >
                 <td>@item.name</td>
-                <td>@item.initVersionCode / @item.initVersionName</td>
-                <td>@item.currentVersionCode.fold("")(_.toString) / @item.currentVersionName.getOrElse("")</td>
+                <td>@item.initVersionCode / @if(item.initVersionName == null || item.initVersionName.size == 0) {unknown} else {item.initVersionName}</td>
+                <td>@item.currentVersionCode.fold("unknown")(_.toString) / @item.currentVersionName.getOrElse("unknown")</td>
                 <td>@item.lastUpdate.getOrElse("")</td>
 
                 <td>

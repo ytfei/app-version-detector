@@ -51,7 +51,7 @@ class PollingActor(app: Application) extends Actor {
   }
 
   def checkAppVersion(): Unit = {
-    val message = new ArrayBuffer[String]()
+    val updates = new ArrayBuffer[(String, String, String)]()
 
     def doPoll() = {
       val apks = models.AppInfo.readAll
@@ -70,10 +70,7 @@ class PollingActor(app: Application) extends Actor {
                 models.AppInfo.update(apk.copy(currentVersionCode = Option(versionCode),
                   currentVersionName = versionName))
 
-                message +=
-                  s"""
-                    | ${apk.name} upgraded to "$versionCode / ${versionName.getOrElse("unknown")}" from "$v / ${if (n != null && n.size > 0) n else "unknown"}"
-                  """.stripMargin
+                updates += ((apk.name, s"$versionCode / ${versionName.getOrElse("unknown")}", s"""$v / ${if (n != null && n.size > 0) n else "unknown"}"""))
               }
             }
 
@@ -85,20 +82,26 @@ class PollingActor(app: Application) extends Actor {
 
     Try(doPoll()) match {
       case Failure(e) =>
-        Logger.warn(e.getMessage, e)
+        e match {
+          case e1: MattersApiException =>
+            Logger.warn(e.getMessage + "\n origin data is: " + e1.data, e)
 
+          case _ =>
+            Logger.warn(e.getMessage, e)
+        }
       case _ => // Success
     }
 
-    if (message.size > 0) {
+    if (updates.size > 0) {
       val recipients = Subscriber.readAll.map(_.email).toSeq
-      sendMail(message.mkString("\n"), recipients)
+      sendMail(updates.toSeq, recipients)
     }
   }
 
-  def sendMail(content: String, recipients: Seq[String]) = {
+  def sendMail(content: Seq[(String, String, String)], recipients: Seq[String]) = {
     Logger.info("Send Mail" + content + " to " + recipients.mkString(","))
-    MailSender.send(mailConf, recipients.mkString(","), "", "App updated!", content)
+    val title = content.size + " App updated!"
+    MailSender.send(mailConf, recipients.mkString(","), "", title, views.html.mailNotify(title, content).toString())
   }
 
   def scheduleTrigger(interval: Int) = {
