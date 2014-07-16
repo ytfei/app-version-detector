@@ -53,43 +53,41 @@ class PollingActor(app: Application) extends Actor {
   def checkAppVersion(): Unit = {
     val updates = new ArrayBuffer[(String, String, String)]()
 
-    def doPoll() = {
-      val apks = models.AppInfo.readAll
-      for (apk <- apks) {
-        detector.lookup(apk.name) match {
-          case info@AppInfo(_, versionCode, versionName, lastUpdate) =>
-            Logger.info(s"Found app info: ${info.toString}")
+    val apks = models.AppInfo.readAll
+    for (apk <- apks) {
+      Try(detector.lookup(apk.name)) match {
+        case Failure(e) =>
+          e match {
+            case e1: MattersApiException =>
+              Logger.warn(e.getMessage + "\n origin data is: " + e1.data, e)
+
+            case _ =>
+              Logger.warn(e.getMessage, e)
+          }
+
+        case Succ(data) =>
+          data match {
+            case info@AppInfo(_, versionCode, versionName, lastUpdate) =>
+              Logger.info(s"Found app info: ${info.toString}")
 
 
-            if (versionCode > 0) {
-              val (v, n) = if (apk.currentVersionCode.isDefined)
-                (apk.currentVersionCode.get, apk.currentVersionName.getOrElse(""))
-              else (apk.initVersionCode, apk.initVersionName)
+              if (versionCode > 0) {
+                val (v, n) = if (apk.currentVersionCode.isDefined)
+                  (apk.currentVersionCode.get, apk.currentVersionName.getOrElse(""))
+                else (apk.initVersionCode, apk.initVersionName)
 
-              if (v != versionCode) {
-                models.AppInfo.update(apk.copy(currentVersionCode = Option(versionCode),
-                  currentVersionName = versionName))
+                if (v != versionCode) {
+                  models.AppInfo.update(apk.copy(currentVersionCode = Option(versionCode),
+                    currentVersionName = versionName))
 
-                updates += ((apk.name, s"$versionCode / ${versionName.getOrElse("unknown")}", s"""$v / ${if (n != null && n.size > 0) n else "unknown"}"""))
+                  updates += ((apk.name, s"$versionCode / ${versionName.getOrElse("unknown")}", s"""$v / ${if (n != null && n.size > 0) n else "unknown"}"""))
+                }
               }
-            }
 
-          case error: Error =>
-            Logger.error(s"Failed to lookup app info for: $apk with error: ${error.toString}")
-        }
+            case error: Error =>
+              Logger.error(s"Failed to lookup app info for: $apk with error: ${error.toString}")
+          }
       }
-    }
-
-    Try(doPoll()) match {
-      case Failure(e) =>
-        e match {
-          case e1: MattersApiException =>
-            Logger.warn(e.getMessage + "\n origin data is: " + e1.data, e)
-
-          case _ =>
-            Logger.warn(e.getMessage, e)
-        }
-      case _ => // Success
     }
 
     if (updates.size > 0) {

@@ -39,7 +39,7 @@ object AppManager extends Controller {
 
         BadRequest(views.html.appList(AppInfo.readAll, formWithError, Option(buff.mkString("<br />"))))
       }, app => {
-        if (AppInfo.create(AppInfo(0, app.name, app.versionCode, app.versionName.getOrElse(""))) > 0)
+        if (AppInfo.create(AppInfo(0, app.name.trim, app.versionCode, app.versionName.getOrElse("").trim)) > 0)
           Redirect(routes.AppManager.index)
         else
           BadRequest("Failed to create app: " + app)
