@@ -10,13 +10,7 @@ import org.antlr.v4.runtime.{CommonTokenStream, ANTLRInputStream}
  * Created by evans on 7/17/14.
  */
 object Test {
-  def run() = {
-    println("Try to input a SQL statement: ")
-    val stat = Console.readLine()
-    doRun(stat)
-  }
-
-  def doRun(statement: String) {
+  def run(statement: String) {
     val input = new ANTLRInputStream(new ByteArrayInputStream(statement.getBytes))
     val tokens = new CommonTokenStream(new SqlLexer(input))
 
