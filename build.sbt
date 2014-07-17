@@ -10,4 +10,6 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "com.typesafe" %% "play-plugins-mailer" % "2.2.0"
 
+libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.3"
+
 play.Project.playScalaSettings
